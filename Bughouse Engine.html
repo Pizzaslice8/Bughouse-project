@@ -1,9 +1,437 @@
 <!DOCTYPE html>
 <html>
     <head>
-        
+        <title>Bughouse vs computer</title>
+        <meta charset="UFT-8">
+        <script>
+            let turn1 = true;
+            let turn2 = false;
+            let highlighted = null;
+            let squares, clocks, pieces;
+            let time1 = 300;
+            let time2 = 300;
+            let position1 = [
+                6, 10, 8, 4, 2, 8, 10, 6,
+                12, 12, 12, 12, 12, 12, 12, 12,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                11, 11, 11, 11, 11, 11, 11, 11,
+                5, 9, 7, 3, 1, 7, 9, 5
+            ];
+            let position2 = [
+                5, 9, 7, 3, 1, 7, 9, 5,
+                11, 11, 11, 11, 11, 11, 11, 11,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                12, 12, 12, 12, 12, 12, 12, 12,
+                6, 10, 8, 4, 2, 8, 10, 6
+            ];
+            let whitePawnVision, blackPawnVision, knightVision, kingVision, bishopBitboards, rookBitboards;
+            function initialize() {
+                squares = document.getElementsByClassName("square");
+                pieces = document.getElementsByClassName("piece");
+                clocks = document.getElementsByClassName("clock");
+                document.addEventListener("click", function(event) {
+                    if (event.target.tagName === "BODY") {
+                        highlighted = null;
+                    }
+                });
+                for (let i = 0; i < squares.length; i++) {
+                    squares[i].addEventListener("click", function(event) {
+                        if (highlighted == null) {
+                            highlighted = i;
+                        } else if (highlighted != i) {
+                            console.log("yep");
+                            movePiece(highlighted, i);
+                            highlighted = null;
+                        }
+                    });
+                }
+            }
+            function movePiece(start, end) {
+                pieces[end].innerHTML = pieces[start].innerHTML;
+                pieces[start].innerHTML = "";
+            }
+            function getPiece(square) {
+                return (square < 64) ? position1[square] : position2[square-64]; 
+            }
+            function getX(square) {
+                return (square % 64) % 8;
+            }
+            function getY(square) {
+                return (square % 64 - getX(square)) / 8;
+            }
+            function color(piece) {
+                return piece % 2 == 1;
+            }
+        </script>
+        <style>
+            body {background-color: dodgerblue;}
+            .square {
+                font-size: 0;
+                width: 70px;
+                height: 70px;
+                position: relative;
+                align-items: center;
+                justify-content: center;
+                display: inline-flex;
+                margin: 0px 0px 0px 0px;
+                border: none;
+            }
+            .square:focus {background-color: firebrick !important;}
+            .dark:hover {background-color: sandybrown;}
+            .light:hover {background-color: lightgray;}
+            .piece {
+                font-size: 60px;
+                margin: 0px 0px 0px 0px;
+            }
+            .light {background-color: whitesmoke;}
+            .dark {background-color: burlywood;}
+            .board {
+                display: inline-block;
+                margin: 50px 50px 50px 50px;
+            }
+            .clock {
+                display: inline-block;
+                position: relative;
+                vertical-align: top;
+                margin-top: 230px;
+            }
+            .time {
+                display: inline-block;
+                width: 100px;
+                height: 50px;
+                font-size: xx-large;
+                color: dimgray;
+                background-color: ghostwhite;
+                font-family: 'Courier New', Courier, monospace;
+                margin: 30px 30px 30px 30px;
+                border-radius: 10px;
+                vertical-align: top;
+                align-items: center;
+                border: none;
+            }
+            .clickable:hover {
+                cursor: pointer;
+                background-color: antiquewhite;
+            }
+            .clickable:active {
+                background-color: tan;
+            }
+        </style>
     </head>
-    <body>
-        
+    <body onload="initialize();">
+        <div class="clock">
+                <button class="time">
+                    <div>5:00</div>
+                </button>
+                <br>
+                <button class="time clickable">
+                    <div>5:00</div>
+                </button>
+        </div>
+        <div class="board">
+                <button type="button" class="light square">
+                    <div class="piece">&#9820;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9822;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9821;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9819;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9818;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9821;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9822;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9820;</div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece">&#9814;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9816;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9815;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9813;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9812;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9815;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9816;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9814;</div>
+                </button>
+        </div>
+        <div class="board">
+                <button type="button" class="light square">
+                    <div class="piece">&#9814;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9816;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9815;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9812;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9813;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9815;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9816;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9814;</div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9817;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9817;</div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button><button type="button" class="dark square">
+                    <div class="piece"></div>
+                </button><button type="button" class="light square">
+                    <div class="piece"></div>
+                </button>
+                <br>
+                <button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9823;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9823;</div>
+                </button>
+                <br>
+                <button type="button" class="dark square">
+                    <div class="piece">&#9820;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9822;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9821;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9818;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9819;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9821;</div>
+                </button><button type="button" class="dark square">
+                    <div class="piece">&#9822;</div>
+                </button><button type="button" class="light square">
+                    <div class="piece">&#9820;</div>
+                </button>
+        </div>
+        <div class="clock">
+                <button class="time">
+                    <div>5:00</div>
+                </button>
+                <br>
+                <button class="time clickable">
+                    <div>5:00</div>
+                </button>
+        </div>
     </body>
 </html>
