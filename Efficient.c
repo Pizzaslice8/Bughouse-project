@@ -32,7 +32,6 @@ float clocks[4]; //white board 1, black board 1, white board 2, black board 2
 typedef struct {
     float eval;
     char message[256];
-    float timeTaken;
 } Output;
 uint64_t largeRand(void) {
     return ((uint64_t)rand() << 48 | (uint64_t)rand() << 32 | (uint64_t)rand() << 16 | (uint64_t)rand());
@@ -53,8 +52,7 @@ bool color(int pieceid) {
 }
 Output evalDepth(int depth, int alpha, int beta) {
     Output out;
-    out.eval = 0.0;
-    out.timeTaken = 1.0;
+    out.eval = 0.0f;
     strcpy(out.message, emptyMessage);
     return out;
 }
@@ -84,7 +82,13 @@ int main() {
     initialize();
     printf("done\n");
     printf("Calculating...\n");
+    struct timespec ts;
+    if (timespec_get(&ts, TIME_UTC) != TIME_UTC) return 1;
+    uint64_t start_ns = (uint64_t)ts.tv_sec  * 1000000000ULL + ts.tv_nsec;
     Output display = (deepSearch) ? evalDepth(6, -2147483648, 2147483647) : evalDepth(4, -2147483648, 2147483647);
-    printf("Evaluation: %f\nOutput: \n\n%s\n\nin %f seconds", display.eval, display.message, display.timeTaken);
+    if (timespec_get(&ts, TIME_UTC) != TIME_UTC) return 1;
+    uint64_t end_ns = (uint64_t)ts.tv_sec  * 1000000000ULL + ts.tv_nsec;
+    float timeTaken = (end_ns - start_ns) / 1000000000.0f;
+    printf("Evaluation: %f\nOutput: \n\n%s\n\nin %f seconds", display.eval, display.message, timeTaken);
     return 0;
 }
